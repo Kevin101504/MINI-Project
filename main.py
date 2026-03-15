@@ -11,7 +11,7 @@ from evaluation import evaluate
 from supply_chain import supply_chain_action
 from visualization import plot_predictions, plot_feature_importance
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import TimeSeriesSplit
 from sklearn.preprocessing import MinMaxScaler
 
 
@@ -35,18 +35,21 @@ def main():
         'day',
         'month',
         'year',
-        'dayofweek'
+        'dayofweek',
+        'rolling_7',
+        'rolling_30'
     ]
 
     X = df[features]
     y = df['target_demand']
     
     # Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=0.2,
-        shuffle=False
-    )
+    tscv = TimeSeriesSplit(n_splits=5)
+
+    for train_index, test_index in tscv.split(X):
+
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
     # -------------------------
     # Scale for LSTM
