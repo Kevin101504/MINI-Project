@@ -5,6 +5,8 @@ import numpy as np
 from tensorflow.keras.models import load_model
 from hybrid_model import hybrid_prediction
 from datetime import timedelta
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 st.title("AI Demand Forecasting System")
 
@@ -132,3 +134,106 @@ if st.button("Generate 30-Day Forecast"):
         st.success(f"Stock sufficient. Surplus: {round(surplus,2)} units")
 
     st.dataframe(forecast_df)
+    
+    # -------------------------
+    # Store Demand Heatmap
+    # -------------------------
+
+    st.subheader("Store Demand Heatmap")
+
+    store_predictions = []
+
+    for store in sorted(data.store_id.unique()):
+
+        input_data = pd.DataFrame({
+            "product_id":[product_id],
+            "category_id":[category_id],
+            "store_id":[store],
+            "price":[price],
+            "promotion_flag":[promotion_flag],
+            "holiday_flag":[holiday_flag],
+            "economic_index":[economic_index],
+            "day":[start_date.day],
+            "month":[start_date.month],
+            "year":[start_date.year],
+            "dayofweek":[start_date.weekday()],
+            "rolling_7":[rolling_7],
+            "rolling_30":[rolling_30]
+        })
+
+        # XGBoost
+        xgb_pred = xgb_model.predict(input_data)
+
+        # LSTM
+        scaled = scaler.transform(input_data)
+        lstm_input = scaled.reshape((scaled.shape[0],1,scaled.shape[1]))
+        lstm_pred = lstm_model.predict(lstm_input).flatten()
+
+        final_pred = hybrid_prediction(lstm_pred, xgb_pred)
+
+        store_predictions.append(final_pred[0])
+
+    heatmap_df = pd.DataFrame({
+        "store_id": sorted(data.store_id.unique()),
+        "predicted_demand": store_predictions
+    })
+
+    heatmap_df = heatmap_df.set_index("store_id")
+
+    fig, ax = plt.subplots(figsize=(8,4))
+    sns.heatmap(heatmap_df.T, cmap="Reds", annot=True, fmt=".1f", ax=ax)
+
+    st.pyplot(fig)
+    
+    # -------------------------
+    # Product Demand Comparison
+    # -------------------------
+
+    # st.subheader("Product Demand Comparison")
+
+    # selected_products = st.multiselect(
+    #     "Select products to compare",
+    #     sorted(data.product_id.unique())
+    # )
+
+    # if st.button("Compare Product Demand"):
+
+    #     comparison_results = {}
+
+    #     for prod in selected_products:
+
+    #         input_data = pd.DataFrame({
+    #             "product_id":[prod],
+    #             "category_id":[category_id],
+    #             "store_id":[store_id],
+    #             "price":[price],
+    #             "promotion_flag":[promotion_flag],
+    #             "holiday_flag":[holiday_flag],
+    #             "economic_index":[economic_index],
+    #             "day":[start_date.day],
+    #             "month":[start_date.month],
+    #             "year":[start_date.year],
+    #             "dayofweek":[start_date.weekday()],
+    #             "rolling_7":[rolling_7],
+    #             "rolling_30":[rolling_30]
+    #         })
+
+    #         # XGBoost prediction
+    #         xgb_pred = xgb_model.predict(input_data)
+
+    #         # LSTM prediction
+    #         scaled = scaler.transform(input_data)
+    #         lstm_input = scaled.reshape((scaled.shape[0],1,scaled.shape[1]))
+    #         lstm_pred = lstm_model.predict(lstm_input).flatten()
+
+    #         final_pred = hybrid_prediction(lstm_pred, xgb_pred)
+
+    #         comparison_results[prod] = final_pred[0]
+
+    #     comparison_df = pd.DataFrame.from_dict(
+    #         comparison_results,
+    #         orient="index",
+    #         columns=["Predicted Demand"]
+    #     )
+
+    #     st.bar_chart(comparison_df)
