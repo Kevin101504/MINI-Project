@@ -3,12 +3,13 @@ import numpy as np
 import joblib
 
 from preprocessing import load_data
-from feature_engineering import create_features, create_lag_features
+from feature_engineering import create_features
 from lstm_model import train_lstm
-from ensemble_model import train_rf
+from xgb_model import train_xgb
 from hybrid_model import hybrid_prediction
 from evaluation import evaluate
 from supply_chain import supply_chain_action
+from visualization import plot_predictions, plot_feature_importance
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -55,6 +56,8 @@ def main():
 
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
+    
+    joblib.dump(scaler, "models/scaler.pkl")
 
     # reshape for LSTM
     X_train_lstm = X_train_scaled.reshape(
@@ -78,16 +81,16 @@ def main():
     lstm_pred = lstm_model.predict(X_test_lstm).flatten()
 
     # -------------------------
-    # Train Random Forest
+    # Train XGBoost
     # -------------------------
 
-    print("Training Random Forest model...")
+    print("Training XGBoost model...")
 
-    rf_model = train_rf(X_train, y_train)
+    xgb_model = train_xgb(X_train, y_train)
     
-    joblib.dump(rf_model, "models/rf_model.pkl")
+    joblib.dump(xgb_model, "models/xgb_model.pkl")
 
-    rf_pred = rf_model.predict(X_test)
+    xgb_pred = xgb_model.predict(X_test)
 
     # -------------------------
     # Hybrid prediction
@@ -95,7 +98,7 @@ def main():
 
     print("Combining predictions...")
 
-    final_pred = hybrid_prediction(lstm_pred, rf_pred)
+    final_pred = hybrid_prediction(lstm_pred, xgb_pred)
 
     # -------------------------
     # Evaluate model
@@ -104,6 +107,13 @@ def main():
     print("Evaluating model...")
 
     evaluate(y_test, final_pred)
+    
+    # -------------------------
+    # Visualization
+    # -------------------------
+    
+    plot_predictions(y_test, final_pred)
+    plot_feature_importance(xgb_model, features)
 
     # -------------------------
     # Supply chain decision
