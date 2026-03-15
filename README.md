@@ -63,6 +63,34 @@ python main.py
 	- To change training hyperparameters (epochs, batch size, RF params), edit `lstm_model.py` and `ensemble_model.py` respectively.
 	- For GPU acceleration, install the GPU build of TensorFlow and ensure CUDA/cuDNN are configured.
 
+## Optional: Dashboard
+
+- A simple Streamlit dashboard is provided in `dashboard.py` for quick dataset preview and uploads.
+- Install Streamlit and run the dashboard with:
+
+```bash
+pip install streamlit
+streamlit run dashboard.py
+```
+
+## Safer data loading (optional)
+
+- Currently `preprocessing.py` reads a specific filename (`data/demand_forecasting_dataset (1).csv`). If your downloaded CSV has a different name, either rename it to match or update the code.
+- A small, robust alternative is to let the script load the first CSV found in `data/`. Example snippet you can use in `preprocessing.py`:
+
+```python
+import glob
+import pandas as pd
+
+files = glob.glob("data/*.csv")
+if not files:
+		raise FileNotFoundError("No CSV found in data/ - download dataset and place it there.")
+
+df = pd.read_csv(files[0])
+```
+
+This avoids hard-coded filenames and works regardless of the exact downloaded name.
+
 ## Repo structure (key files)
 - `main.py` — entry point
 - `preprocessing.py` — data cleaning
