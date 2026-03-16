@@ -103,7 +103,7 @@ if st.button("Generate 30-Day Forecast"):
     # Historical Demand Chart
     # -------------------------
 
-    st.subheader("Historical Demand Trend")
+    st.subheader("Demand Trend")
 
     chart_data = product_history[['date','target_demand']]
     chart_data = chart_data.set_index("date")
@@ -139,51 +139,51 @@ if st.button("Generate 30-Day Forecast"):
     # Store Demand Heatmap
     # -------------------------
 
-    st.subheader("Store Demand Heatmap")
+    # st.subheader("Store Demand Heatmap")
 
-    store_predictions = []
+    # store_predictions = []
 
-    for store in sorted(data.store_id.unique()):
+    # for store in sorted(data.store_id.unique()):
 
-        input_data = pd.DataFrame({
-            "product_id":[product_id],
-            "category_id":[category_id],
-            "store_id":[store],
-            "price":[price],
-            "promotion_flag":[promotion_flag],
-            "holiday_flag":[holiday_flag],
-            "economic_index":[economic_index],
-            "day":[start_date.day],
-            "month":[start_date.month],
-            "year":[start_date.year],
-            "dayofweek":[start_date.weekday()],
-            "rolling_7":[rolling_7],
-            "rolling_30":[rolling_30]
-        })
+    #     input_data = pd.DataFrame({
+    #         "product_id":[product_id],
+    #         "category_id":[category_id],
+    #         "store_id":[store],
+    #         "price":[price],
+    #         "promotion_flag":[promotion_flag],
+    #         "holiday_flag":[holiday_flag],
+    #         "economic_index":[economic_index],
+    #         "day":[start_date.day],
+    #         "month":[start_date.month],
+    #         "year":[start_date.year],
+    #         "dayofweek":[start_date.weekday()],
+    #         "rolling_7":[rolling_7],
+    #         "rolling_30":[rolling_30]
+    #     })
 
-        # XGBoost
-        xgb_pred = xgb_model.predict(input_data)
+    #     # XGBoost
+    #     xgb_pred = xgb_model.predict(input_data)
 
-        # LSTM
-        scaled = scaler.transform(input_data)
-        lstm_input = scaled.reshape((scaled.shape[0],1,scaled.shape[1]))
-        lstm_pred = lstm_model.predict(lstm_input).flatten()
+    #     # LSTM
+    #     scaled = scaler.transform(input_data)
+    #     lstm_input = scaled.reshape((scaled.shape[0],1,scaled.shape[1]))
+    #     lstm_pred = lstm_model.predict(lstm_input).flatten()
 
-        final_pred = hybrid_prediction(lstm_pred, xgb_pred)
+    #     final_pred = hybrid_prediction(lstm_pred, xgb_pred)
 
-        store_predictions.append(final_pred[0])
+    #     store_predictions.append(final_pred[0])
 
-    heatmap_df = pd.DataFrame({
-        "store_id": sorted(data.store_id.unique()),
-        "predicted_demand": store_predictions
-    })
+    # heatmap_df = pd.DataFrame({
+    #     "store_id": sorted(data.store_id.unique()),
+    #     "predicted_demand": store_predictions
+    # })
 
-    heatmap_df = heatmap_df.set_index("store_id")
+    # heatmap_df = heatmap_df.set_index("store_id")
 
-    fig, ax = plt.subplots(figsize=(8,4))
-    sns.heatmap(heatmap_df.T, cmap="Reds", annot=True, fmt=".1f", ax=ax)
+    # fig, ax = plt.subplots(figsize=(8,4))
+    # sns.heatmap(heatmap_df.T, cmap="Reds", annot=True, fmt=".1f", ax=ax)
 
-    st.pyplot(fig)
+    # st.pyplot(fig)
     
     # -------------------------
     # Product Demand Comparison
